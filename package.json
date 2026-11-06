@@ -36,6 +36,7 @@
     "react-dom": "^19.1.1",
     "react-intersection-observer": "^11.0.0",
     "react-redux": "^9.2.0",
+    "react-router": "^8.5.1",
     "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
