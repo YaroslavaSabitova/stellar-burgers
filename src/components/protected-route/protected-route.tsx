@@ -18,6 +18,14 @@ export const ProtectedRoute = ({
   children,
   onlyUnAuth = false,
 }: ProtectedRouteProps): React.ReactNode => {
+  // ВРЕМЕННЫЙ КОСТЫЛЬ:
+  // const userState = useSelector((state: any) => state.user);
+  // Если стейта нет, считаем, что проверка пройдена (true), а юзер не залогинен (null)
+  // const isAuthChecked = userState?.isAuthChecked ?? true;
+  // const user = userState?.user ?? null;
+  // ВРЕМЕННЫЙ КОСТЫЛЬ
+
+  // вернуть
   const { isAuthChecked, user } = useSelector((state) => state.user);
 
   const location = useLocation();
