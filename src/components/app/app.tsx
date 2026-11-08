@@ -11,31 +11,38 @@ import {
   ResetPassword,
 } from '@pages';
 import { Preloader } from '@ui';
+import { useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 
+import {
+  fetchIngredients,
+  selectIngredients,
+  selectIngredientsLoading,
+  selectIngredientsError,
+} from '../../services/slices/ingredientsSlice';
+import { useDispatch, useSelector } from '../../services/store';
 import { ProtectedRoute } from '../protected-route/protected-route';
 
 import type { AppContentProps } from './type';
-import type { TIngredient } from '@utils-types';
-import type { Location } from 'react-router-dom';
 
 import '../../index.css';
 
 import styles from './app.module.css';
 
 const App = (): React.JSX.Element => {
-  const ingredients: TIngredient[] = [];
-  const isIngredientsLoading = false;
-  const ingredientsError = null;
+  const dispatch = useDispatch();
+  const ingredients = useSelector(selectIngredients);
+  const isLoading = useSelector(selectIngredientsLoading);
+  const error = useSelector(selectIngredientsError);
+
+  useEffect(() => {
+    void dispatch(fetchIngredients());
+  }, [dispatch]);
 
   return (
     <div className={styles.app}>
       <AppHeader />
-      <AppContent
-        ingredients={ingredients}
-        isLoading={isIngredientsLoading}
-        error={ingredientsError}
-      />
+      <AppContent ingredients={ingredients} isLoading={isLoading} error={error} />
     </div>
   );
 };
@@ -49,18 +56,13 @@ const AppContent = ({
   isLoading,
   error,
 }: AppContentProps): React.JSX.Element => {
-  if (isLoading) {
-    return <Preloader />;
-  }
-
-  if (error) {
+  if (isLoading) return <Preloader />;
+  if (error)
     return (
       <p className={`${styles.message} text text_type_main-medium`}>
-        Не удалось загрузить ингредиенты
-        {error.message ? `: ${error.message}` : '.'}
+        Не удалось загрузить ингредиенты: {error}
       </p>
     );
-  }
 
   // if (!ingredients.length) {
   //   return (
