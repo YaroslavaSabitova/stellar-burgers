@@ -9,7 +9,7 @@ import {
   registerUserApi,
   updateUserApi,
 } from '../../utils/burger-api';
-import { deleteCookie } from '../../utils/cookie';
+import { deleteCookie, setCookie } from '../../utils/cookie';
 
 import type { TRegisterData, TLoginData } from '../../utils/burger-api';
 import type { TUser } from '@utils-types';
@@ -33,6 +33,10 @@ export const loginUser = createAsyncThunk<TUser, TLoginData, { rejectValue: stri
   async (data, { rejectWithValue }) => {
     try {
       const response = await loginUserApi(data);
+
+      setCookie('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+
       return response.user;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -47,6 +51,10 @@ export const registerUser = createAsyncThunk<
 >('user/registerUser', async (data, { rejectWithValue }) => {
   try {
     const response = await registerUserApi(data);
+
+    setCookie('accessToken', response.accessToken);
+    localStorage.setItem('refreshToken', response.refreshToken);
+
     return response.user;
   } catch (error) {
     return rejectWithValue((error as Error).message);

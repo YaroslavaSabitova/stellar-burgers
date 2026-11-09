@@ -1,4 +1,4 @@
-import { Preloader } from '@ui';
+// import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
 import { useEffect } from 'react';
 
@@ -17,9 +17,9 @@ export const Feed = (): React.JSX.Element => {
     void dispatch(fetchFeeds());
   };
 
-  if (!orders.length) {
-    return <Preloader />;
-  }
+  // if (!orders.length) {
+  //   return <Preloader />;
+  // }
 
   return <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />;
 };

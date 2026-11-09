@@ -1,8 +1,9 @@
 import { Preloader, OrderInfoUI } from '@ui';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { useSelector } from '../../services/store';
+import { getOrderByNumberApi } from '../../utils/burger-api';
 
 import type { TIngredient, TOrder } from '@utils-types';
 
@@ -16,7 +17,11 @@ export const OrderInfo = (): React.JSX.Element => {
   const { number } = useParams<{ number: string }>();
   const orderNumber = Number(number);
 
-  const orderData = useSelector((state) => {
+  const [fetchedOrder, setFetchedOrder] = useState<TOrder | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+
+  // Ищем заказ в сторе (в ленте или в истории)
+  const orderFromStore = useSelector((state) => {
     const s = state as unknown as TStateWithOrders;
     return (
       s.feed?.orders?.find((o) => o.number === orderNumber) ??
@@ -24,17 +29,36 @@ export const OrderInfo = (): React.JSX.Element => {
     );
   });
 
-  const ingredients: TIngredient[] = useSelector((state) => {
+  const ingredients = useSelector((state) => {
     const s = state as unknown as TStateWithOrders;
     return s.ingredients?.items ?? [];
   });
 
-  /* Готовим данные для отображения */
+  // Если заказа нет в сторе — запрашиваем его с сервера
+  useEffect(() => {
+    if (!orderFromStore && !fetchedOrder && !isFetching && orderNumber) {
+      setIsFetching(true);
+      getOrderByNumberApi(orderNumber)
+        .then((res) => {
+          if (res.success && res.orders.length > 0) {
+            setFetchedOrder(res.orders[0]);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+        .finally(() => {
+          setIsFetching(false);
+        });
+    }
+  }, [orderFromStore, fetchedOrder, isFetching, orderNumber]);
+
+  const orderData = orderFromStore ?? fetchedOrder;
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
     const date = new Date(orderData.createdAt);
-
     type TIngredientsWithCount = Record<string, TIngredient & { count: number }>;
 
     const ingredientsInfo = orderData.ingredients.reduce(
@@ -42,15 +66,11 @@ export const OrderInfo = (): React.JSX.Element => {
         if (!acc[item]) {
           const ingredient = ingredients.find((ing) => ing._id === item);
           if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1,
-            };
+            acc[item] = { ...ingredient, count: 1 };
           }
         } else {
           acc[item].count++;
         }
-
         return acc;
       },
       {}
@@ -61,12 +81,7 @@ export const OrderInfo = (): React.JSX.Element => {
       0
     );
 
-    return {
-      ...orderData,
-      ingredientsInfo,
-      date,
-      total,
-    };
+    return { ...orderData, ingredientsInfo, date, total };
   }, [orderData, ingredients]);
 
   if (!orderInfo) {

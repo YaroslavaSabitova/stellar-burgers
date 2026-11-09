@@ -12,7 +12,7 @@ import {
 } from '@pages';
 import { Preloader } from '@ui';
 import { useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
   fetchIngredients,
@@ -73,6 +73,27 @@ const AppContent = ({
   // }
 
   return <RouteComponent />;
+};
+
+type TModalWrapperProps = {
+  onClose: () => void;
+};
+
+const IngredientModal = ({ onClose }: TModalWrapperProps): React.JSX.Element => {
+  return (
+    <Modal title="Детали ингредиента" onClose={onClose}>
+      <IngredientDetails />
+    </Modal>
+  );
+};
+
+const OrderModal = ({ onClose }: TModalWrapperProps): React.JSX.Element => {
+  const { number } = useParams();
+  return (
+    <Modal title={`#${number}`} onClose={onClose}>
+      <OrderInfo />
+    </Modal>
+  );
 };
 
 const RouteComponent = (): React.JSX.Element => {
@@ -184,35 +205,22 @@ const RouteComponent = (): React.JSX.Element => {
         <Route path="*" element={<NotFound404 />} />
       </Routes>
 
-      {/* 2. МОДАЛЬНЫЙ БЛОК РОУТОВ */}
-      {/* Рендерится только если в state есть background (т.е. был клик по карточке) */}
+      {/* модальный блок */}
       {background && (
         <Routes>
           <Route
             path="/ingredients/:id"
-            element={
-              <Modal title="Детали ингредиента" onClose={handleCloseModal}>
-                <IngredientDetails />
-              </Modal>
-            }
+            element={<IngredientModal onClose={handleCloseModal} />}
           />
-
           <Route
             path="/feed/:number"
-            element={
-              <Modal title="Детали заказа" onClose={handleCloseModal}>
-                <OrderInfo />
-              </Modal>
-            }
+            element={<OrderModal onClose={handleCloseModal} />}
           />
-
           <Route
             path="/profile/orders/:number"
             element={
               <ProtectedRoute>
-                <Modal title="Детали заказа" onClose={handleCloseModal}>
-                  <OrderInfo />
-                </Modal>
+                <OrderModal onClose={handleCloseModal} />
               </ProtectedRoute>
             }
           />
