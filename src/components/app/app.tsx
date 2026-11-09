@@ -20,6 +20,7 @@ import {
   selectIngredientsLoading,
   selectIngredientsError,
 } from '../../services/slices/ingredientsSlice';
+import { getUser } from '../../services/slices/userSlice';
 import { useDispatch, useSelector } from '../../services/store';
 import { ProtectedRoute } from '../protected-route/protected-route';
 
@@ -37,6 +38,7 @@ const App = (): React.JSX.Element => {
 
   useEffect(() => {
     void dispatch(fetchIngredients());
+    void dispatch(getUser());
   }, [dispatch]);
 
   return (
