@@ -1,4 +1,3 @@
-// import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
 import { useEffect } from 'react';
 
@@ -14,12 +13,9 @@ export const Feed = (): React.JSX.Element => {
   }, [dispatch]);
 
   const handleGetFeeds = (): void => {
+    // console.log('Кнопка Обновить нажата!');
     void dispatch(fetchFeeds());
   };
-
-  // if (!orders.length) {
-  //   return <Preloader />;
-  // }
 
   return <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />;
 };
