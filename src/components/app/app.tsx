@@ -66,12 +66,6 @@ const AppContent = ({
       </p>
     );
 
-  // if (!ingredients.length) {
-  //   return (
-  //     <p className={`${styles.message} text text_type_main-medium`}>Нет ингредиентов</p>
-  //   );
-  // }
-
   return <RouteComponent />;
 };
 
@@ -93,6 +87,18 @@ const OrderModal = ({ onClose }: TModalWrapperProps): React.JSX.Element => {
     <Modal title={`#${number}`} onClose={onClose}>
       <OrderInfo />
     </Modal>
+  );
+};
+
+const OrderPageWrapper = (): React.JSX.Element => {
+  const { number } = useParams();
+  return (
+    <>
+      <p className={`text text_type_digits-default mb-10 ${styles.detailHeader}`}>
+        #{number}
+      </p>
+      <OrderInfo />
+    </>
   );
 };
 
@@ -124,6 +130,9 @@ const RouteComponent = (): React.JSX.Element => {
           path="/ingredients/:id"
           element={
             <div className={styles.detailPageWrap}>
+              <h1 className={`text text_type_main-large mb-5 ${styles.detailHeader}`}>
+                Детали ингредиента
+              </h1>
               <IngredientDetails />
             </div>
           }
@@ -132,7 +141,7 @@ const RouteComponent = (): React.JSX.Element => {
           path="/feed/:number"
           element={
             <div className={styles.detailPageWrap}>
-              <OrderInfo />
+              <OrderPageWrapper />
             </div>
           }
         />
@@ -195,7 +204,8 @@ const RouteComponent = (): React.JSX.Element => {
           element={
             <ProtectedRoute>
               <div className={styles.detailPageWrap}>
-                <OrderInfo />
+                {/* Заголовок для заказа из истории */}
+                <OrderPageWrapper />
               </div>
             </ProtectedRoute>
           }
