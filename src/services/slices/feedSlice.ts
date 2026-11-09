@@ -3,11 +3,13 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { getFeedsApi, getOrdersApi } from '../../utils/burger-api';
+import { logoutUser } from './userSlice';
 
 import type { TOrder } from '@utils-types';
 
 type TFeedState = {
-  orders: TOrder[];
+  orders: TOrder[]; // Общая лента
+  profileOrders: TOrder[]; // История заказов
   total: number;
   totalToday: number;
   isLoading: boolean;
@@ -16,6 +18,7 @@ type TFeedState = {
 
 const initialState: TFeedState = {
   orders: [],
+  profileOrders: [],
   total: 0,
   totalToday: 0,
   isLoading: false,
@@ -74,11 +77,15 @@ const feedSlice = createSlice({
       })
       .addCase(fetchProfileOrders.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.orders = action.payload; // Перезаписываем заказы на историю
+        state.profileOrders = action.payload;
       })
       .addCase(fetchProfileOrders.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? 'Ошибка загрузки истории';
+      })
+      // ОЧИСТКА ПРИ ВЫХОДЕ ИЗ АККАУНТА
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.profileOrders = []; // очищаем историю пользователя
       });
   },
 });
@@ -86,5 +93,9 @@ const feedSlice = createSlice({
 export const selectFeed = (state: { feed: TFeedState }): TFeedState => state.feed;
 export const selectFeedOrders = (state: { feed: TFeedState }): TOrder[] =>
   state.feed.orders;
+export const selectProfileOrders = (state: { feed: TFeedState }): TOrder[] =>
+  state.feed.profileOrders;
+export const selectFeedLoading = (state: { feed: TFeedState }): boolean =>
+  state.feed.isLoading;
 
 export default feedSlice.reducer;

@@ -9,7 +9,7 @@ import {
   registerUserApi,
   updateUserApi,
 } from '../../utils/burger-api';
-import { deleteCookie, setCookie } from '../../utils/cookie';
+import { deleteCookie, setCookie, getCookie } from '../../utils/cookie';
 
 import type { TRegisterData, TLoginData } from '../../utils/burger-api';
 import type { TUser } from '@utils-types';
@@ -73,6 +73,16 @@ export const getUser = createAsyncThunk<TUser, void, { rejectValue: string }>(
   }
 );
 
+export const checkUserAuth = createAsyncThunk<void, void, { rejectValue: string }>(
+  'user/checkUserAuth',
+  async (_, { dispatch }) => {
+    if (getCookie('accessToken')) {
+      await dispatch(getUser());
+    }
+    dispatch(setAuthChecked());
+  }
+);
+
 export const updateUser = createAsyncThunk<
   TUser,
   Partial<TRegisterData>,
@@ -102,7 +112,15 @@ export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
 const userSlice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
+  reducers: {
+    // сбрасывать ошибку при уходе со страницы (unmount)
+    clearError: (state) => {
+      state.error = null;
+    },
+    setAuthChecked: (state) => {
+      state.isAuthChecked = true;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // loginUser
@@ -166,6 +184,8 @@ const userSlice = createSlice({
       });
   },
 });
+
+export const { clearError, setAuthChecked } = userSlice.actions;
 
 export const selectUser = (state: { user: TUserState }): TUser | null => state.user.user;
 export const selectUserIsAuthChecked = (state: { user: TUserState }): boolean =>

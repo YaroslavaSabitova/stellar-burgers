@@ -1,7 +1,7 @@
 import { ProfileUI } from '@ui-pages';
 import { type SyntheticEvent, useEffect, useState } from 'react';
 
-import { selectUser, updateUser } from '../../services/slices/userSlice';
+import { selectUser, updateUser, clearError } from '../../services/slices/userSlice';
 import { useDispatch, useSelector } from '../../services/store';
 
 export const Profile = (): React.JSX.Element => {
@@ -22,6 +22,12 @@ export const Profile = (): React.JSX.Element => {
     }));
   }, [user]);
 
+  useEffect((): (() => void) => {
+    return (): void => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
+
   const isFormChanged =
     formValue.name !== user?.name ||
     formValue.email !== user?.email ||
@@ -31,10 +37,18 @@ export const Profile = (): React.JSX.Element => {
     e.preventDefault();
 
     const { password, ...rest } = formValue;
-
     const dataToUpdate = password ? { ...rest, password } : rest;
 
-    void dispatch(updateUser(dataToUpdate));
+    //  .then(), чтобы дождаться ответа от сервера
+    void dispatch(updateUser(dataToUpdate)).then((result) => {
+      if (result.meta.requestStatus === 'fulfilled') {
+        // Очищаем пароль только после успешного сохранения
+        setFormValue((prevState) => ({
+          ...prevState,
+          password: '',
+        }));
+      }
+    });
   };
 
   const handleCancel = (e: SyntheticEvent): void => {

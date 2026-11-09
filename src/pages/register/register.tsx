@@ -1,8 +1,12 @@
 import { RegisterUI } from '@ui-pages';
-import { type SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { registerUser, selectUserError } from '../../services/slices/userSlice';
+import {
+  registerUser,
+  selectUserError,
+  clearError,
+} from '../../services/slices/userSlice';
 import { useDispatch, useSelector } from '../../services/store';
 
 export const Register = (): React.JSX.Element => {
@@ -13,6 +17,12 @@ export const Register = (): React.JSX.Element => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const error = useSelector(selectUserError);
+
+  useEffect((): (() => void) => {
+    return (): void => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   const handleSubmit = (e: SyntheticEvent): void => {
     e.preventDefault();

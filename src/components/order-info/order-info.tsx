@@ -1,59 +1,50 @@
 import { Preloader, OrderInfoUI } from '@ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { useSelector } from '../../services/store';
-import { getOrderByNumberApi } from '../../utils/burger-api';
+//  селекторы заказов и ингредиентов
+import { selectFeedOrders, selectProfileOrders } from '../../services/slices/feedSlice';
+import { selectIngredients } from '../../services/slices/ingredientsSlice';
+//  новые экшены и селекторы заказа
+import {
+  fetchOrderByNumber,
+  selectCurrentOrder,
+  selectOrderLoading,
+  selectOrderError,
+} from '../../services/slices/orderSlice';
+import { useDispatch, useSelector } from '../../services/store';
 
-import type { TIngredient, TOrder } from '@utils-types';
-
-type TStateWithOrders = {
-  feed?: { orders?: TOrder[] };
-  profileOrders?: { orders?: TOrder[] };
-  ingredients?: { items?: TIngredient[] };
-};
+import type { TIngredient } from '@utils-types';
 
 export const OrderInfo = (): React.JSX.Element => {
   const { number } = useParams<{ number: string }>();
   const orderNumber = Number(number);
+  const dispatch = useDispatch();
 
-  const [fetchedOrder, setFetchedOrder] = useState<TOrder | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
+  //  данные из существующих селекторов
+  const feedOrders = useSelector(selectFeedOrders);
+  const profileOrders = useSelector(selectProfileOrders);
+  const ingredients = useSelector(selectIngredients);
 
-  // Ищем заказ в сторе (в ленте или в истории)
-  const orderFromStore = useSelector((state) => {
-    const s = state as unknown as TStateWithOrders;
-    return (
-      s.feed?.orders?.find((o) => o.number === orderNumber) ??
-      s.profileOrders?.orders?.find((o) => o.number === orderNumber)
-    );
-  });
+  // ищем заказ в ленте или истории
+  const orderFromStore =
+    feedOrders.find((o) => o.number === orderNumber) ??
+    profileOrders.find((o) => o.number === orderNumber);
 
-  const ingredients = useSelector((state) => {
-    const s = state as unknown as TStateWithOrders;
-    return s.ingredients?.items ?? [];
-  });
+  //  данные загрузки из orderSlice
+  const currentOrder = useSelector(selectCurrentOrder);
+  const isLoading = useSelector(selectOrderLoading);
+  const error = useSelector(selectOrderError);
 
-  // Если заказа нет в сторе — запрашиваем его с сервера
+  // если заказа нет в сторе — запрашиваем через thunk
   useEffect(() => {
-    if (!orderFromStore && !fetchedOrder && !isFetching && orderNumber) {
-      setIsFetching(true);
-      getOrderByNumberApi(orderNumber)
-        .then((res) => {
-          if (res.success && res.orders.length > 0) {
-            setFetchedOrder(res.orders[0]);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        })
-        .finally(() => {
-          setIsFetching(false);
-        });
+    if (!orderFromStore && orderNumber) {
+      void dispatch(fetchOrderByNumber(orderNumber));
     }
-  }, [orderFromStore, fetchedOrder, isFetching, orderNumber]);
+  }, [orderFromStore, orderNumber, dispatch]);
 
-  const orderData = orderFromStore ?? fetchedOrder;
+  // выбираем, что отображать: заказ из ленты/истории или загруженный
+  const orderData = orderFromStore ?? currentOrder;
 
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
@@ -83,6 +74,19 @@ export const OrderInfo = (): React.JSX.Element => {
 
     return { ...orderData, ingredientsInfo, date, total };
   }, [orderData, ingredients]);
+
+  // обработка состояний загрузки и ошибок
+  if (isLoading && !orderData) {
+    return <Preloader />;
+  }
+
+  if (error && !orderData) {
+    return (
+      <p className="text text_type_main-medium mt-10">
+        Заказ не найден или произошла ошибка при загрузке
+      </p>
+    );
+  }
 
   if (!orderInfo) {
     return <Preloader />;

@@ -1,8 +1,10 @@
 import { Preloader } from '@ui';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { selectUser, selectUserIsAuthChecked } from '../../services/slices/userSlice';
 import { useSelector } from '../../services/store';
 
+import type { TLocationState } from '@utils-types';
 import type React from 'react';
 
 type ProtectedRouteProps = {
@@ -10,15 +12,12 @@ type ProtectedRouteProps = {
   onlyUnAuth?: boolean;
 };
 
-type TLocationState = {
-  from?: { pathname?: string };
-};
-
 export const ProtectedRoute = ({
   children,
   onlyUnAuth = false,
 }: ProtectedRouteProps): React.ReactNode => {
-  const { isAuthChecked, user } = useSelector((state) => state.user);
+  const isAuthChecked = useSelector(selectUserIsAuthChecked);
+  const user = useSelector(selectUser);
 
   const location = useLocation();
 

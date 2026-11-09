@@ -2,14 +2,18 @@ import { BurgerConstructorUI } from '@ui';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+//  экшены и селекторы конструктора
+import {
+  selectConstructorBun,
+  selectConstructorIngredients,
+} from '../../services/slices/constructorSlice';
+//  экшены и селекторы заказа
 import {
   createOrder,
   clearOrderModal,
-  selectConstructorBun,
-  selectConstructorIngredients,
   selectOrderRequest,
   selectOrderModalData,
-} from '../../services/slices/constructorSlice';
+} from '../../services/slices/orderSlice';
 import { selectUser } from '../../services/slices/userSlice';
 import { useDispatch, useSelector } from '../../services/store';
 
@@ -20,6 +24,8 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
 
   const bun = useSelector(selectConstructorBun);
   const ingredients = useSelector(selectConstructorIngredients);
+
+  // данные из orderSlice
   const orderRequest = useSelector(selectOrderRequest);
   const orderModalData = useSelector(selectOrderModalData);
 

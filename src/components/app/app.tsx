@@ -16,35 +16,41 @@ import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router
 
 import {
   fetchIngredients,
-  selectIngredients,
   selectIngredientsLoading,
   selectIngredientsError,
 } from '../../services/slices/ingredientsSlice';
-import { getUser } from '../../services/slices/userSlice';
+//  checkUserAuth вместо getUser
+import { checkUserAuth } from '../../services/slices/userSlice';
 import { useDispatch, useSelector } from '../../services/store';
 import { ProtectedRoute } from '../protected-route/protected-route';
 
 import type { AppContentProps } from './type';
+import type { Location } from 'react-router-dom';
 
 import '../../index.css';
 
 import styles from './app.module.css';
 
+type TLocationState = {
+  background?: Location;
+};
+
 const App = (): React.JSX.Element => {
   const dispatch = useDispatch();
-  const ingredients = useSelector(selectIngredients);
+
   const isLoading = useSelector(selectIngredientsLoading);
   const error = useSelector(selectIngredientsError);
 
   useEffect(() => {
     void dispatch(fetchIngredients());
-    void dispatch(getUser());
+
+    void dispatch(checkUserAuth());
   }, [dispatch]);
 
   return (
     <div className={styles.app}>
       <AppHeader />
-      <AppContent ingredients={ingredients} isLoading={isLoading} error={error} />
+      <AppContent isLoading={isLoading} error={error} />
     </div>
   );
 };
@@ -53,11 +59,7 @@ export default App;
 
 /* Маршруты показываются только когда ингредиенты загружены: без них не
    отрисовать ни конструктор, ни состав заказа. */
-const AppContent = ({
-  // ingredients,
-  isLoading,
-  error,
-}: AppContentProps): React.JSX.Element => {
+const AppContent = ({ isLoading, error }: AppContentProps): React.JSX.Element => {
   if (isLoading) return <Preloader />;
   if (error)
     return (
@@ -106,14 +108,9 @@ const RouteComponent = (): React.JSX.Element => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  type TLocationState = {
-    background?: Location;
-  };
-
   const state = location.state as TLocationState | null;
   const background = state?.background;
 
-  // закрытие модального окна (возвращает на предыдущий шаг)
   const handleCloseModal = (): void => {
     void navigate(-1);
   };
@@ -146,7 +143,7 @@ const RouteComponent = (): React.JSX.Element => {
           }
         />
 
-        {/* Маршруты только для НЕавторизованных пользователей (гостей) */}
+        {/* Маршруты только для неавторизованных пользователей   */}
         <Route
           path="/login"
           element={
@@ -180,7 +177,7 @@ const RouteComponent = (): React.JSX.Element => {
           }
         />
 
-        {/* Маршруты только для АВТОРИЗОВАННЫХ пользователей */}
+        {/* Маршруты только для авторизованных пользователей */}
         <Route
           path="/profile"
           element={
@@ -204,14 +201,13 @@ const RouteComponent = (): React.JSX.Element => {
           element={
             <ProtectedRoute>
               <div className={styles.detailPageWrap}>
-                {/* Заголовок для заказа из истории */}
                 <OrderPageWrapper />
               </div>
             </ProtectedRoute>
           }
         />
 
-        {/* 404 - если ни один маршрут не совпал */}
+        {/* 404 */}
         <Route path="*" element={<NotFound404 />} />
       </Routes>
 
