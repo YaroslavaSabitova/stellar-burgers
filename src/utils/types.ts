@@ -51,3 +51,8 @@ export type TFeedState = {
   isLoading: boolean;
   error: unknown;
 };
+
+// Тип для состояния, которое передается при редиректе через React Router
+export type TLocationState = {
+  from?: { pathname?: string };
+};

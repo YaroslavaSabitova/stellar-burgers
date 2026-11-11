@@ -1,34 +1,58 @@
 import { BurgerConstructorUI } from '@ui';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import type { TConstructorIngredient, TConstructorState, TOrder } from '@utils-types';
+//  экшены и селекторы конструктора
+import {
+  selectConstructorBun,
+  selectConstructorIngredients,
+} from '../../services/slices/constructorSlice';
+//  экшены и селекторы заказа
+import {
+  createOrder,
+  clearOrderModal,
+  selectOrderRequest,
+  selectOrderModalData,
+} from '../../services/slices/orderSlice';
+import { selectUser } from '../../services/slices/userSlice';
+import { useDispatch, useSelector } from '../../services/store';
 
 export const BurgerConstructor = (): React.JSX.Element | null => {
-  /** TODO: Взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems: TConstructorState = {
-    bun: null,
-    ingredients: [],
-  };
-  const orderRequest = false;
-  const orderModalData: TOrder | null = null;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector(selectUser);
 
+  const bun = useSelector(selectConstructorBun);
+  const ingredients = useSelector(selectConstructorIngredients);
+
+  // данные из orderSlice
+  const orderRequest = useSelector(selectOrderRequest);
+  const orderModalData = useSelector(selectOrderModalData);
+
+  const constructorItems = { bun, ingredients };
+
+  // оформление заказа
   const onOrderClick = (): void => {
-    if (!constructorItems.bun || orderRequest) return;
-    // TODO: Оформить заказ
+    if (!bun || orderRequest) return;
+
+    if (!user) {
+      void navigate('/login'); // если не авторизован, то логин
+      return;
+    }
+
+    const ingredientIds = [bun._id, ...ingredients.map((item) => item._id), bun._id];
+    void dispatch(createOrder(ingredientIds));
   };
 
   const closeOrderModal = (): void => {
-    // TODO: Закрыть модальное окно и сбросить заказ
+    // закрыть модальное окно и сбросить заказ
+    dispatch(clearOrderModal());
   };
 
   const price = useMemo(
     () =>
-      (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
-      constructorItems.ingredients.reduce(
-        (s: number, v: TConstructorIngredient) => s + v.price,
-        0
-      ),
-    [constructorItems]
+      (bun ? bun.price * 2 : 0) + ingredients.reduce((s: number, v) => s + v.price, 0),
+    [bun, ingredients]
   );
 
   return (

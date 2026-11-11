@@ -1,28 +1,55 @@
 import { Preloader, OrderInfoUI } from '@ui';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+
+//  селекторы заказов и ингредиентов
+import { selectFeedOrders, selectProfileOrders } from '../../services/slices/feedSlice';
+import { selectIngredients } from '../../services/slices/ingredientsSlice';
+//  новые экшены и селекторы заказа
+import {
+  fetchOrderByNumber,
+  selectCurrentOrder,
+  selectOrderLoading,
+  selectOrderError,
+} from '../../services/slices/orderSlice';
+import { useDispatch, useSelector } from '../../services/store';
 
 import type { TIngredient } from '@utils-types';
 
 export const OrderInfo = (): React.JSX.Element => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0,
-  };
+  const { number } = useParams<{ number: string }>();
+  const orderNumber = Number(number);
+  const dispatch = useDispatch();
 
-  const ingredients: TIngredient[] = [];
+  //  данные из существующих селекторов
+  const feedOrders = useSelector(selectFeedOrders);
+  const profileOrders = useSelector(selectProfileOrders);
+  const ingredients = useSelector(selectIngredients);
 
-  /* Готовим данные для отображения */
+  // ищем заказ в ленте или истории
+  const orderFromStore =
+    feedOrders.find((o) => o.number === orderNumber) ??
+    profileOrders.find((o) => o.number === orderNumber);
+
+  //  данные загрузки из orderSlice
+  const currentOrder = useSelector(selectCurrentOrder);
+  const isLoading = useSelector(selectOrderLoading);
+  const error = useSelector(selectOrderError);
+
+  // если заказа нет в сторе — запрашиваем через thunk
+  useEffect(() => {
+    if (!orderFromStore && orderNumber) {
+      void dispatch(fetchOrderByNumber(orderNumber));
+    }
+  }, [orderFromStore, orderNumber, dispatch]);
+
+  // выбираем, что отображать: заказ из ленты/истории или загруженный
+  const orderData = orderFromStore ?? currentOrder;
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
     const date = new Date(orderData.createdAt);
-
     type TIngredientsWithCount = Record<string, TIngredient & { count: number }>;
 
     const ingredientsInfo = orderData.ingredients.reduce(
@@ -30,15 +57,11 @@ export const OrderInfo = (): React.JSX.Element => {
         if (!acc[item]) {
           const ingredient = ingredients.find((ing) => ing._id === item);
           if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1,
-            };
+            acc[item] = { ...ingredient, count: 1 };
           }
         } else {
           acc[item].count++;
         }
-
         return acc;
       },
       {}
@@ -49,13 +72,21 @@ export const OrderInfo = (): React.JSX.Element => {
       0
     );
 
-    return {
-      ...orderData,
-      ingredientsInfo,
-      date,
-      total,
-    };
+    return { ...orderData, ingredientsInfo, date, total };
   }, [orderData, ingredients]);
+
+  // обработка состояний загрузки и ошибок
+  if (isLoading && !orderData) {
+    return <Preloader />;
+  }
+
+  if (error && !orderData) {
+    return (
+      <p className="text text_type_main-medium mt-10">
+        Заказ не найден или произошла ошибка при загрузке
+      </p>
+    );
+  }
 
   if (!orderInfo) {
     return <Preloader />;

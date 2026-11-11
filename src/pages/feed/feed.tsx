@@ -1,17 +1,29 @@
 import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
+import { useEffect } from 'react';
 
-import type { TOrder } from '@utils-types';
+import {
+  fetchFeeds,
+  selectFeedOrders,
+  selectFeedLoading,
+} from '../../services/slices/feedSlice';
+import { useDispatch, useSelector } from '../../services/store';
 
 export const Feed = (): React.JSX.Element => {
-  // TODO: Взять переменную из стора
-  const orders: TOrder[] = [];
+  const dispatch = useDispatch();
+  const orders = useSelector(selectFeedOrders);
+  const isLoading = useSelector(selectFeedLoading); // статус загрузки
+
+  useEffect(() => {
+    void dispatch(fetchFeeds());
+  }, [dispatch]);
 
   const handleGetFeeds = (): void => {
-    // TODO: Запросить ленту заказов
+    void dispatch(fetchFeeds());
   };
 
-  if (!orders.length) {
+  // показываем прелоадер при первой загрузке, когда заказов еще нет
+  if (isLoading && !orders.length) {
     return <Preloader />;
   }
 

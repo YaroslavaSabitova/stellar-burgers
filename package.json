@@ -30,12 +30,14 @@
     "@reduxjs/toolkit": "^2.9.0",
     "core-js": "^3.45.1",
     "lodash-es": "^4.17.21",
+    "nanoid": "^6.0.2",
     "react": "^19.1.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.1.1",
     "react-intersection-observer": "^11.0.0",
     "react-redux": "^9.2.0",
+    "react-router": "^8.5.1",
     "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
