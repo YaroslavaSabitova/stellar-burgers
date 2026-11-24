@@ -1,0 +1,60 @@
+{
+  "success": true,
+  "name": "Краторный био-марсианский бургер",
+  "order": {
+    "_id": "6b05edb0d52992ca5ffe75b3",
+    "number": 12345,
+    "name": "Краторный био-марсианский бургер",
+    "ingredients": [
+      {
+        "_id": "6acd6b8163765e371c0bd9eb",
+        "name": "Краторная булка N-200i",
+        "type": "bun",
+        "proteins": 80,
+        "fat": 24,
+        "carbohydrates": 53,
+        "calories": 420,
+        "price": 1255,
+        "image": "https://norma.ffapi.ru/images/bun-02.png",
+        "image_mobile": "https://norma.ffapi.ru/images/bun-02-mobile.png",
+        "image_large": "https://norma.ffapi.ru/images/bun-02-large.png"
+      },
+      {
+        "_id": "6acd6b8163765e96530bd9f0",
+        "name": "Биокотлета из марсианской Магнолии",
+        "type": "main",
+        "proteins": 420,
+        "fat": 142,
+        "carbohydrates": 242,
+        "calories": 4242,
+        "price": 424,
+        "image": "https://norma.ffapi.ru/images/meat-01.png",
+        "image_mobile": "https://norma.ffapi.ru/images/meat-01-mobile.png",
+        "image_large": "https://norma.ffapi.ru/images/meat-01-large.png"
+      },
+      {
+        "_id": "6acd6b8163765e371c0bd9eb",
+        "name": "Краторная булка N-200i",
+        "type": "bun",
+        "proteins": 80,
+        "fat": 24,
+        "carbohydrates": 53,
+        "calories": 420,
+        "price": 1255,
+        "image": "https://norma.ffapi.ru/images/bun-02.png",
+        "image_mobile": "https://norma.ffapi.ru/images/bun-02-mobile.png",
+        "image_large": "https://norma.ffapi.ru/images/bun-02-large.png"
+      }
+    ],
+    "owner": {
+      "name": "TestUser",
+      "email": "test@test.ru",
+      "createdAt": "2026-11-09T11:39:54.293Z",
+      "updatedAt": "2026-11-24T19:58:48.665Z"
+    },
+    "status": "done",
+    "createdAt": "2026-11-24T20:04:00.739Z",
+    "updatedAt": "2026-11-24T20:04:00.741Z",
+    "price": 2934
+  }
+}

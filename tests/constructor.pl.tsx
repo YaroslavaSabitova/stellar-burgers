@@ -1,53 +1,37 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('add ingredients to constructor works correctly', function () {
+test.describe('Конструктор бургера', () => {
   test.beforeEach(async ({ page }) => {
-    // моковый запрос ингредиентов
-    await page.route('**/api/ingredients', async (route) => {
-      const mockIngredients = {
-        success: true,
-        data: [
-          {
-            _id: '643d69a5c3f7b9001cfa093c',
-            name: 'Краторная булка N-200i',
-            type: 'bun',
-            proteins: 80,
-            fat: 24,
-            carbohydrates: 53,
-            calories: 420,
-            price: 1255,
-          },
-          {
-            _id: '643d69a5c3f7b9001cfa0941',
-            name: 'Биокотлета из марсианской Магнолии',
-            type: 'main',
-            proteins: 420,
-            fat: 142,
-            carbohydrates: 242,
-            calories: 4242,
-            price: 424,
-          },
-        ],
-      };
-      await route.fulfill({ json: mockIngredients });
+    // Подключаем HAR-файлы (update: false означает, что мы только ЧИТАЕМ данные)
+    await page.routeFromHAR('tests/hars/ingredients.har', {
+      url: '**/api/ingredients',
+      update: false,
+    });
+
+    await page.routeFromHAR('tests/hars/auth.har', {
+      url: '**/api/auth/**',
+      update: false,
+    });
+
+    await page.routeFromHAR('tests/hars/orders.har', {
+      url: '**/api/orders',
+      update: false,
     });
 
     await page.goto('/');
-    // ждём загрузку
+    // Ждём загрузку ингредиентов
     await expect(page.getByText('Краторная булка N-200i').first()).toBeVisible();
   });
 
-  // ТЕСТ 1: Добавление ингредиентов
-  test('should add ingredients to constructor', async ({ page }) => {
-    // Чтобы добавить в конструктор, кликаем по кнопке "Добавить" в карточке булки
-    // Ищем li (карточку), внутри которой есть текст булки, и кликаем по кнопке
+  test('добавление ингредиента из списка в конструктор', async ({ page }) => {
+    // Добавляем булку
     await page
       .locator('li')
       .filter({ hasText: 'Краторная булка N-200i' })
       .getByRole('button', { name: 'Добавить' })
       .click();
 
-    // Проверяем, что заглушка "Выберите булки" пропала, а булка добавилась
+    // Проверяем, что заглушка "Выберите булки" пропала
     await expect(page.getByText('Выберите булки')).not.toBeVisible();
 
     // Добавляем начинку
@@ -61,12 +45,9 @@ test.describe('add ingredients to constructor works correctly', function () {
     await expect(page.getByText('Выберите начинку')).not.toBeVisible();
   });
 
-  // ТЕСТ 2: Работа модальных окон
-  test('should open and close ingredient modal', async ({ page }) => {
-    // Открываем модалку кликом по ссылке (тексту) ингредиента
+  test('открытие и закрытие модального окна ингредиента', async ({ page }) => {
+    // Открываем модалку
     await page.getByText('Краторная булка N-200i').first().click();
-
-    // В модалке есть заголовок "Детали ингредиента"
     await expect(page.getByText('Детали ингредиента')).toBeVisible();
 
     // Закрываем по крестику
@@ -82,23 +63,8 @@ test.describe('add ingredients to constructor works correctly', function () {
     await expect(page.getByText('Детали ингредиента')).not.toBeVisible();
   });
 
-  // ТЕСТ 3: Создание заказа
-  test('should create order and clear constructor', async ({ page }) => {
-    // 1. Мокаем пользователя
-    await page.route('**/api/auth/user', async (route) => {
-      await route.fulfill({
-        json: { success: true, user: { email: 'test@test.ru', name: 'TestUser' } },
-      });
-    });
-
-    // 2. Мокаем создание заказа
-    await page.route('**/api/orders', async (route) => {
-      await route.fulfill({
-        json: { success: true, order: { number: 12345 } },
-      });
-    });
-
-    // 3. Подставляем моковые токены
+  test('создание заказа, проверка номера и очистка конструктора', async ({ page }) => {
+    // Подставляем моковые токены авторизации (это нужно, чтобы приложение поняло, что мы вошли)
     await page.addInitScript(() => {
       localStorage.setItem('refreshToken', 'mock-refresh-token');
     });
@@ -111,13 +77,13 @@ test.describe('add ingredients to constructor works correctly', function () {
       },
     ]);
 
-    // Перезагружаем страницу
+    // Перезагружаем страницу, чтобы применились токены и загрузился пользователь из HAR
     await page.reload();
 
-    // Ждем, пока подтянется имя пользователя (проверка авторизации)
+    // Ждем, пока подтянется имя пользователя (из auth.har)
     await expect(page.getByText('TestUser')).toBeVisible({ timeout: 10000 });
 
-    // Собираем бургер (кликаем по кнопкам "Добавить")
+    // Собираем бургер
     await page
       .locator('li')
       .filter({ hasText: 'Краторная булка N-200i' })
@@ -133,7 +99,7 @@ test.describe('add ingredients to constructor works correctly', function () {
     // Нажимаем "Оформить заказ"
     await page.getByRole('button', { name: 'Оформить заказ' }).click();
 
-    // Проверяем модалку с номером заказа
+    // Проверяем модалку с номером заказа (из orders.har)
     await expect(page.getByText('12345')).toBeVisible();
 
     // Закрываем модалку
