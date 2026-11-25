@@ -8,17 +8,20 @@ describe('Тестирование ingredientsSlice', () => {
   };
 
   it('должен возвращать начальное состояние при вызове с неизвестным экшеном', () => {
-    // Передаем undefined в качестве начального состояния, чтобы проверить initialState по умолчанию
     const result = ingredientsReducer(undefined, { type: 'UNKNOWN_ACTION' });
     expect(result).toEqual(initialState);
   });
 
   it('должен обрабатывать fetchIngredients.pending', () => {
     const action = { type: fetchIngredients.pending.type };
-    const state = ingredientsReducer(initialState, action);
+    // передаем состояние с ошибкой, чтобы показать, что pending её очищает
+    const state = ingredientsReducer(
+      { ...initialState, error: 'Старая ошибка' },
+      action
+    );
 
     expect(state.isLoading).toBe(true);
-    expect(state.error).toBeNull();
+    expect(state.error).toBeNull(); // проверяем, что ошибка сбросилась
   });
 
   it('должен обрабатывать fetchIngredients.fulfilled', () => {
@@ -27,17 +30,21 @@ describe('Тестирование ingredientsSlice', () => {
       { _id: '2', name: 'Котлета', type: 'main', price: 200 },
     ];
     const action = { type: fetchIngredients.fulfilled.type, payload: mockIngredients };
-    const state = ingredientsReducer(initialState, action);
 
-    expect(state.isLoading).toBe(false);
+    // передаем состояние isLoading: true, чтобы показать, что fulfilled его выключает
+    const state = ingredientsReducer({ ...initialState, isLoading: true }, action);
+
+    expect(state.isLoading).toBe(false); // проверяем, что загрузка прекратилась
     expect(state.items).toEqual(mockIngredients);
   });
 
   it('должен обрабатывать fetchIngredients.rejected', () => {
     const action = { type: fetchIngredients.rejected.type, payload: 'Ошибка сети' };
-    const state = ingredientsReducer(initialState, action);
 
-    expect(state.isLoading).toBe(false);
+    // передаем состояние isLoading: true, чтобы показать, что rejected его выключает
+    const state = ingredientsReducer({ ...initialState, isLoading: true }, action);
+
+    expect(state.isLoading).toBe(false); // проверяем, что загрузка прекратилась
     expect(state.error).toBe('Ошибка сети');
   });
 });

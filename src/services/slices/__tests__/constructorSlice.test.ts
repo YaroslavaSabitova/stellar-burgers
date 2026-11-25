@@ -47,14 +47,22 @@ describe('Тестирование constructorSlice', () => {
 
   it('должен добавлять булку через addIngredient', () => {
     const state = constructorReducer(initialState, addIngredient(mockBun));
-    expect(state.bun?.name).toBe('Булка');
+
+    expect(state.bun).toEqual({
+      ...mockBun,
+      id: expect.any(String) as unknown as string, // приведение типа для линтера
+    });
     expect(state.ingredients).toHaveLength(0);
   });
 
   it('должен добавлять начинку через addIngredient', () => {
     const state = constructorReducer(initialState, addIngredient(mockMain));
     expect(state.ingredients).toHaveLength(1);
-    expect(state.ingredients[0].name).toBe('Котлета');
+
+    expect(state.ingredients[0]).toEqual({
+      ...mockMain,
+      id: expect.any(String) as unknown as string, // приведение типа для линтера
+    });
   });
 
   it('должен удалять ингредиент через removeIngredient', () => {

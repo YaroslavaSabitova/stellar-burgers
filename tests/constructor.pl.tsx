@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Конструктор бургера', () => {
   test.beforeEach(async ({ page }) => {
-    // Подключаем HAR-файлы (update: false означает, что мы только ЧИТАЕМ данные)
     await page.routeFromHAR('tests/hars/ingredients.har', {
       url: '**/api/ingredients',
       update: false,
@@ -19,52 +18,64 @@ test.describe('Конструктор бургера', () => {
     });
 
     await page.goto('/');
-    // Ждём загрузку ингредиентов
-    await expect(page.getByText('Краторная булка N-200i').first()).toBeVisible();
+    // загрузка ингредиентов
+    await expect(page.getByText('Краторная булка N-200i')).toBeVisible();
   });
 
   test('добавление ингредиента из списка в конструктор', async ({ page }) => {
-    // Добавляем булку
+    // проверяем, чтобы надписи были видны в контейнере конструктора бургера до добавления туда ингредиентов
+    await expect(page.getByText('Выберите булки').first()).toBeVisible();
+    await expect(page.getByText('Выберите начинку')).toBeVisible();
+
+    // добавляем булку
     await page
       .locator('li')
       .filter({ hasText: 'Краторная булка N-200i' })
       .getByRole('button', { name: 'Добавить' })
       .click();
 
-    // Проверяем, что заглушка "Выберите булки" пропала
+    // проверяем, что заглушка "Выберите булки" пропала
     await expect(page.getByText('Выберите булки')).not.toBeVisible();
 
-    // Добавляем начинку
+    // добавляем начинку
     await page
       .locator('li')
       .filter({ hasText: 'Биокотлета из марсианской Магнолии' })
       .getByRole('button', { name: 'Добавить' })
       .click();
 
-    // Проверяем, что заглушка "Выберите начинку" пропала
+    // проверяем, что заглушка "Выберите начинку" пропала
     await expect(page.getByText('Выберите начинку')).not.toBeVisible();
   });
 
   test('открытие и закрытие модального окна ингредиента', async ({ page }) => {
-    // Открываем модалку
-    await page.getByText('Краторная булка N-200i').first().click();
-    await expect(page.getByText('Детали ингредиента')).toBeVisible();
+    // проверяем, что название 'Детали ингредиента' не видно на странице
+    await expect(page.getByText('Детали ингредиента')).not.toBeVisible();
 
-    // Закрываем по крестику
+    // открываем модалку
+    await page.getByText('Краторная булка N-200i').click();
+
+    // модалка по data-testid="modal" и проверка данных внутри
+    const modal = page.getByTestId('modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText('Детали ингредиента')).toBeVisible();
+    await expect(modal.getByText('Краторная булка N-200i')).toBeVisible();
+
+    // закрываем по крестику
     await page.getByTestId('modal-close-button').click();
-    await expect(page.getByText('Детали ингредиента')).not.toBeVisible();
+    await expect(modal).not.toBeVisible();
 
-    // Снова открываем
-    await page.getByText('Краторная булка N-200i').first().click();
-    await expect(page.getByText('Детали ингредиента')).toBeVisible();
+    // открываем
+    await page.getByText('Краторная булка N-200i').click();
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText('Краторная булка N-200i')).toBeVisible();
 
-    // Закрываем по оверлею
+    // закрываем по оверлею
     await page.getByTestId('modal-overlay').click({ position: { x: 10, y: 10 } });
-    await expect(page.getByText('Детали ингредиента')).not.toBeVisible();
+    await expect(modal).not.toBeVisible();
   });
 
   test('создание заказа, проверка номера и очистка конструктора', async ({ page }) => {
-    // Подставляем моковые токены авторизации
     await page.addInitScript(() => {
       localStorage.setItem('refreshToken', 'mock-refresh-token');
     });
@@ -77,13 +88,10 @@ test.describe('Конструктор бургера', () => {
       },
     ]);
 
-    // Перезагружаем страницу, чтобы применились токены и загрузился пользователь из HAR
     await page.reload();
-
-    // Ждем, пока подтянется имя пользователя (из auth.har)
     await expect(page.getByText('TestUser')).toBeVisible({ timeout: 10000 });
 
-    // Собираем бургер
+    // собираем бургер
     await page
       .locator('li')
       .filter({ hasText: 'Краторная булка N-200i' })
@@ -96,16 +104,18 @@ test.describe('Конструктор бургера', () => {
       .getByRole('button', { name: 'Добавить' })
       .click();
 
-    // Нажимаем "Оформить заказ"
     await page.getByRole('button', { name: 'Оформить заказ' }).click();
 
-    // Проверяем модалку с номером заказа (из orders.har)
-    await expect(page.getByText('12345')).toBeVisible();
+    // проверяем модалку с номером заказа
+    const modal = page.getByTestId('modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText('12345')).toBeVisible();
 
-    // Закрываем модалку
+    // закрываем модалку
     await page.getByTestId('modal-close-button').click();
+    await expect(modal).not.toBeVisible();
 
-    // Проверяем, что конструктор очистился
+    // проверяем, что конструктор очистился
     await expect(page.getByText('Выберите булки').first()).toBeVisible();
     await expect(page.getByText('Выберите начинку')).toBeVisible();
   });
